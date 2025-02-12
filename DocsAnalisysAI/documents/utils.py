@@ -9,7 +9,7 @@ from sentence_transformers import SentenceTransformer
 
 # Configuración de Elasticsearch
 es = Elasticsearch(
-        "http://elasticsearch:9200",  # URL de Elasticsearch
+        "http://localhost:9200",  # URL de Elasticsearch
         http_auth=("admin", "admin1234")  # Credenciales de autenticación
     )
 INDEX_NAME = "document_embeddings"
@@ -64,19 +64,26 @@ def process_document(file):
 
 def search_documents(query):
     """ Busca documentos en Elasticsearch usando embeddings """
-    query_embedding = embedding_model.encode(query).tolist()
-
-    response = es.search(index=INDEX_NAME, body={
-        "size": 5,
-        "query": {
-            "script_score": {
-                "query": {"match_all": {}},
-                "script": {
-                    "source": "cosineSimilarity(params.query_vector, 'vector_embeddings') + 1.0",
-                    "params": {"query_vector": query_embedding}
+    try:
+        # Codifica el query en un vector de embeddings
+        query_embedding = embedding_model.encode(query).tolist()
+        
+        # Realiza la búsqueda en Elasticsearch
+        response = es.search(index=INDEX_NAME, body={
+            "size": 5,
+            "query": {
+                "script_score": {
+                    "query": {"match_all": {}},
+                    "script": {
+                        "source": "cosineSimilarity(params.query_vector, 'vector_embeddings') + 1.0",
+                        "params": {"query_vector": query_embedding}
+                    }
                 }
             }
-        }
-    })
+        })
 
-    return [hit["_source"] for hit in response["hits"]["hits"]]
+        # Retorna los documentos que coinciden
+        return [hit["_source"] for hit in response["hits"]["hits"]]
+    except Exception as e:
+        return {"error": f"Error al buscar documentos: {str(e)}"}
+

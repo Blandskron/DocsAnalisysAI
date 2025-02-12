@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'documents',
 ]
 
-ELASTICSEARCH_URL = "http://elasticsearch:9200"
+ELASTICSEARCH_URL = "http://localhost:9200"
 ELASTICSEARCH_INDEX = "document_embeddings"
 
 MIDDLEWARE = [
